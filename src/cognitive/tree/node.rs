@@ -19,6 +19,7 @@ pub struct Node<K> {
 
     // other
     moved: Option<NodeID>,
+    chain_id: Option<usize>,
 }
 
 impl<K> Node<K> {
@@ -33,6 +34,7 @@ impl<K> Node<K> {
             left: None,
             right: None,
             moved: None,
+            chain_id: None,
         }
     }
     pub fn get_id(&self) -> NodeID {
@@ -91,6 +93,12 @@ impl<K> Node<K> {
     }
     pub fn set_moved(&mut self, moved: NodeID) {
         self.moved = Some(moved);
+    }
+    pub fn get_chain_id(&self) -> Option<usize> {
+        self.chain_id
+    }
+    pub fn set_chain_id(&mut self, chain_id: usize) {
+        self.chain_id = Some(chain_id);
     }
     pub fn number_of_children(&self) -> usize {
         self.left.is_some() as usize + self.right.is_some() as usize

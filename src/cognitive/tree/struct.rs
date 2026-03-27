@@ -13,6 +13,7 @@ pub struct TreeModel<K> {
     upper_cursor: NodeID,
     lower_cursor: NodeID,
     unattached: Vec<NodeID>,
+    next_chain_id: usize,
 }
 
 // tree-level methods
@@ -24,6 +25,7 @@ impl<K> TreeModel<K> {
             upper_cursor: 0,
             lower_cursor: 0,
             unattached: Vec::new(),
+            next_chain_id: 1,
         }
     }
     fn size(&self) -> usize {
@@ -94,8 +96,24 @@ impl<K> TreeModel<K> {
     pub fn get_moved(&self, id: NodeID) -> Result<Option<NodeID>> {
         Ok(self.get_node(id)?.get_moved())
     }
+    pub fn get_chain_id(&self, id: NodeID) -> Result<Option<usize>> {
+        Ok(self.get_node(id)?.get_chain_id())
+    }
+    fn set_chain_id(&mut self, id: NodeID, chain_id: usize) -> Result<()> {
+        self.get_node_mut(id)?.set_chain_id(chain_id);
+        Ok(())
+    }
     fn set_moved(&mut self, from: NodeID, to: NodeID) -> Result<()> {
         self.get_node_mut(from)?.set_moved(to);
+
+        let existing = self.get_chain_id(from)?.or(self.get_chain_id(to)?);
+        let chain_id = existing.unwrap_or_else(|| {
+            let chain_id = self.next_chain_id;
+            self.next_chain_id += 1;
+            chain_id
+        });
+        self.set_chain_id(from, chain_id)?;
+        self.set_chain_id(to, chain_id)?;
         Ok(())
     }
 
@@ -509,5 +527,36 @@ impl<K: Clone + Ord> TreeModel<K> {
         }
 
         Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub fn surface_items(&self) -> Result<Vec<K>> {
+        let mut surface = Vec::new();
+        if self.is_empty() {
+            return Ok(surface);
+        }
+
+        let mut nodes = vec![self.root];
+        while let Some(id) = nodes.pop() {
+            let node = self.get_node(id)?;
+            let left = node.get_left();
+            let right = node.get_right();
+
+            if left.is_none() && right.is_none() {
+                if let SyntaxValue::Item(item) = node.get_value() {
+                    surface.push(item.clone());
+                }
+                continue;
+            }
+
+            if let Some(right_id) = right {
+                nodes.push(right_id);
+            }
+            if let Some(left_id) = left {
+                nodes.push(left_id);
+            }
+        }
+
+        Ok(surface)
     }
 }

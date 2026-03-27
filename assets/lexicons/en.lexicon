@@ -47,6 +47,22 @@ DetH = DetH-number
 # Prep
 PrepH = (DetP > PrepP)
 
+# Surface-faithful auxiliary constructions (strict mode)
+DetP-subj = (DidDoB > ClauseP-statement)
+DidDoH = (EatDoP > DidDoB)
+EatDoH = (DetP-obj > EatDoP)
+
+DidQH = (DetP-subj > EatQH)
+EatQH = (DetP-obj > ClauseP-statement)
+DetP-subj = EatQH
+
+DetP-question = (DidWhH > ClauseP-statement)
+DidWhH = (DetP-subj > EatWhH)
+EatWhH = (MOVED(DetP-question) > ClauseP-statement)
+DetP-subj = EatWhH
+DetP-obj = ClauseP-statement
+DetP-question = ClauseP-statement
+
 [Lexical]
 # det
 the = DetH
@@ -65,9 +81,15 @@ did = VerbH-past-transitive
 
 # aux
 did = AuxH-past
+did = DidDoH
+did = DidQH
+did = DidWhH
 
 # little V
 eat = NuH-transitive
+eat = EatDoH
+eat = EatQH
+eat = EatWhH
 
 # prepositions
 in = PrepH

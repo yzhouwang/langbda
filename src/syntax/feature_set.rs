@@ -65,6 +65,10 @@ where
         }
     }
 
+    pub fn contains_key(&self, key: &K) -> bool {
+        self.map.contains_key(key)
+    }
+
     pub fn remove_key_value(&mut self, key: &K, value: &Option<K>) {
         if self.contains_key_value(key, value) {
             self.remove(key);
@@ -91,6 +95,19 @@ where
             }
         }
         true
+    }
+
+    pub fn is_feature_compatible_subset(&self, other: &FeatureSet<K>) -> bool {
+        for (category, _) in self.map.iter() {
+            if !other.contains_key(category) {
+                return false;
+            }
+        }
+        true
+    }
+
+    pub fn overlaps_category(&self, other: &FeatureSet<K>) -> bool {
+        self.map.keys().any(|category| other.contains_key(category))
     }
 }
 

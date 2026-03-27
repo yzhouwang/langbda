@@ -268,3 +268,90 @@ fn parse_lexical_entries<K: KeyType>(
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::interner::GlobalKey;
+    use crate::lexicon::{LexiconEntry, LexiconNode, SimpleLexicon};
+    use std::str::FromStr;
+
+    fn k(s: &str) -> GlobalKey {
+        GlobalKey::from_str(s).unwrap()
+    }
+
+    #[test]
+    fn category_feature_in_lexical_entry_expands_to_finite_values() {
+        let mut lexicon: SimpleLexicon<GlobalKey> = SimpleLexicon::new();
+        let input = r#"[Features]
+number=sg,pl
+
+[Functional]
+
+[Lexical]
+word=number
+"#;
+
+        PestLexiconParser::parse_str(&mut lexicon, input).unwrap();
+        let entries = lexicon.get_entries(&SyntaxValue::Item(k("word")));
+
+        let mut number_sg = FeatureSet::new();
+        number_sg.insert(k("number"), Some(k("sg")));
+        let mut number_pl = FeatureSet::new();
+        number_pl.insert(k("number"), Some(k("pl")));
+        let expected = [
+            LexiconEntry::Lexical(LexiconNode::Value {
+                value: SyntaxValue::Features(number_sg),
+            }),
+            LexiconEntry::Lexical(LexiconNode::Value {
+                value: SyntaxValue::Features(number_pl),
+            }),
+        ]
+        .into_iter()
+        .collect();
+
+        assert_eq!(entries, expected);
+    }
+
+    #[test]
+    fn category_feature_in_functional_entry_expands_to_finite_values() {
+        let mut lexicon: SimpleLexicon<GlobalKey> = SimpleLexicon::new();
+        let input = r#"[Features]
+number=sg,pl
+
+[Functional]
+S=number
+
+[Lexical]
+"#;
+
+        PestLexiconParser::parse_str(&mut lexicon, input).unwrap();
+
+        let mut from = FeatureSet::new();
+        from.insert(k("S"), None);
+        let entries = lexicon.get_entries(&SyntaxValue::Features(from.clone()));
+
+        let mut number_sg = FeatureSet::new();
+        number_sg.insert(k("number"), Some(k("sg")));
+        let mut number_pl = FeatureSet::new();
+        number_pl.insert(k("number"), Some(k("pl")));
+        let expected = [
+            LexiconEntry::Functional {
+                to: LexiconNode::Value {
+                    value: SyntaxValue::Features(number_sg),
+                },
+                project: Some(from.clone()),
+            },
+            LexiconEntry::Functional {
+                to: LexiconNode::Value {
+                    value: SyntaxValue::Features(number_pl),
+                },
+                project: Some(from),
+            },
+        ]
+        .into_iter()
+        .collect();
+
+        assert_eq!(entries, expected);
+    }
+}

@@ -45,6 +45,7 @@ impl<K> TryFrom<ValidEntry<K>> for Node<K> {
     fn try_from(value: ValidEntry<K>) -> Result<Self, Self::Error> {
         match value {
             ValidEntry::Features(fs) => Ok(Node::from(fs)),
+            ValidEntry::Moved { from } => Ok(Node::from(from)),
             ValidEntry::Lambda { from, to, .. } => {
                 let from = ValidEntry::try_into(*from)?;
                 let to = Box::new(Node::from(to));

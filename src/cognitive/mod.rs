@@ -4,7 +4,7 @@ mod model;
 mod tree;
 
 pub use error::Error;
-pub use lambda::LambdaModel;
+pub use lambda::{ChainLifecycleRecord, DerivationStepRecord, LambdaModel};
 pub use model::CognitiveModel;
 pub use tree::TreeModel;
 

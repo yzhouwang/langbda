@@ -4,4 +4,4 @@ mod r#struct;
 mod valid_entry;
 
 pub use error::Error;
-pub use r#struct::LambdaModel;
+pub use r#struct::{ChainLifecycleRecord, DerivationStepRecord, LambdaModel};
