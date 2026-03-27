@@ -1,39 +1,95 @@
 # Langbda
 
-A program that models the cognitive process of a listener receiving a linear sequence of tokens and constructing a syntax tree.
+Langbda is an incremental parser that models how a listener receives a linear token stream and builds structured syntactic interpretations.
 
-## Roadmap
+Current focus is a controlled English grammar with movement-aware parsing behavior inspired by Minimalist Grammar style dependencies.
 
-- [ ] Projection onto `MOVED()`
-- [ ] Support branching on `receive()` and `decide()`
-  - `(A -> (B -> C)) <=> (B -> (A -> C))`
-    - Redefine `Node::Lambda` as `{ from: Vec<Value>, to: Value }`
-  - `((A -> B) -> (C -> D)) <=> ((C -> A), (B -> D)) <=> (A, (B -> (C -> D)))`
-    - Default to `(A, (B -> (C -> D)))`
-    - Add `Node::From` to denote dangling `(A ->)`
-      - `(A ->)` is produced as a decomposition of `([A, B] -> B))`
-      - `(A ->)` automatically attaches to a newly inserted node
-- [ ] Feature: Detect whether a phrase appear in a conjugated sentence.
-  - e.g., "eruitzien" in Hoe ziet het eruit?
-- [ ] Not in plan: Add a NOVALUE value to every category
-  - Possibly with new syntax `!`
+## What It Can Do Now
 
-### Theory
-- [ ] Write a documentation to explain the theory
-- [ ] Collin Phillips (1996, MIT)
+- Parse core clause types in a curated grammar:
+  - declaratives,
+  - PP-attachment ambiguity,
+  - do-support declaratives,
+  - yes-no questions,
+  - wh-object questions.
+- Keep ambiguity where intended:
+  - `the child ate an apple in the room.` yields exactly `2` parses.
+- Track movement-chain lifecycle events in derivation metadata.
+- Render parse trees as PNG and export derivation traces as JSON.
+- Use memoized search to avoid infinite recursion on cyclic functional rules.
 
-### User Experience
-- [ ] Not in plan: A language server for .lexicon files
-  - Detect unreachable entries
-  - Detect possible cycles
+## Quick Start
 
-## Define a lexicon
+Build:
 
-[Example lexicon for English](assets/lexicons/en.lexicon)
+```bash
+cargo build
+```
 
-## Get your sentence parsed
+Run the core fixture batch and export both PNG and JSON:
 
-Below shows how the model captures the two possible interpretations of the sentence "The child ate an apple in the room.", which is created by the scoping ambiguity of the prepositional phrase "in the room".
+```bash
+cargo run -- --batch core --format both --output-dir assets/examples
+```
+
+Parse one sentence:
+
+```bash
+cargo run -- --sentence "did the child eat an apple?" --target Sentence --format both --output-dir assets/examples
+```
+
+Show CLI help:
+
+```bash
+cargo run -- --help
+```
+
+## CLI Options
+
+```text
+langbda [--sentence "..."] [--target Sentence] [--batch core] [--format png|json|both] [--output-dir DIR] [--no-movement-arrows]
+```
+
+- `--sentence`: parse a single input sentence.
+- `--target`: parse target category (default `Sentence`).
+- `--batch core`: run built-in core fixtures.
+- `--format`: artifact format (`png`, `json`, or `both`).
+- `--output-dir`: output directory for artifacts.
+- `--no-movement-arrows`: disable movement arrows in rendered PNG trees.
+
+## Output Artifacts
+
+For each parse, the CLI writes deterministic files:
+
+- `{sentence_slug}__{target_slug}__parse-XX.png`
+- `{sentence_slug}__{target_slug}__parse-XX.json`
+
+JSON includes:
+
+- sentence and target,
+- token stream,
+- ordered derivation steps (`merge/move/check`),
+- movement chain lifecycle events,
+- final well-formedness and unresolved chain diagnostics.
+
+## Example Ambiguity
+
+The model captures two interpretations of:
+
+`The child ate an apple in the room.`
 
 ![](assets/examples/the-child-ate-an-apple-in-the-room-_tree-1.png "\"in the room\" modifies the TP")
 ![](assets/examples/the-child-ate-an-apple-in-the-room-_tree-2.png "\"in the room\" modifies the DP")
+
+## Grammar and Resources
+
+- Example lexicon: [assets/lexicons/en.lexicon](assets/lexicons/en.lexicon)
+- Capability contract: [docs/capability_matrix.md](docs/capability_matrix.md)
+- Quality notes: [docs/quality_report.md](docs/quality_report.md)
+
+## Limits and Scope
+
+- The English lexicon is intentionally small and diagnostic-oriented.
+- This is not an open-domain English parser.
+- Some question analyses still rely on a constrained normalization bridge in the interpreter, so strict surface-faithful derivation for all constructions is still in progress.
+- Formal-language interpretation should be made over this controlled grammar, not broad natural-language coverage.
