@@ -1,1 +1,23 @@
-/target
+# Rust build artifacts
+/target/
+/debug/
+/release/
+
+# OS / editor noise
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Logs / env
+*.log
+.env
+.env.*
+
+# Parser-generated artifacts (keep the two README demo trees tracked)
+/assets/examples/*.png
+/assets/examples/*.json
+!/assets/examples/the-child-ate-an-apple-in-the-room-_tree-1.png
+!/assets/examples/the-child-ate-an-apple-in-the-room-_tree-2.png
